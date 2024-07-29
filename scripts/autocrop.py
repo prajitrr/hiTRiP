@@ -93,7 +93,7 @@ def autocrop(file_path, num_objects, prev_objects=0, tolerance=5, grid_height=3,
         pass
 
     final_points = np.array([(rect[0] + rect[2]/2, rect[1] + rect[3]/2) for rect in final_rectangles], dtype=np.float16)
-    sorted_final_rectangles = [final_rectangles[i] for i in order_points(final_points, grid_height=grid_height, grid_width=grid_width)]
+    sorted_final_rectangles = [final_rectangles[i] for i in order_points(final_points, g_height=grid_height, g_width=grid_width)]
 
     # Uncomment to write video
     for file in sorted_images:

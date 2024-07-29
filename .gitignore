@@ -166,6 +166,9 @@ cython_debug/
 *.jpg
 crop.txt
 Images/
+__MACOSX/
+cropped
+output
 
 #Temp TRiP Files
 .DS_Store
