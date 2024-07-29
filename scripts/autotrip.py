@@ -1,5 +1,5 @@
 from autocrop import autocrop
-import pytrip_temp as pt
+import pytrip as pt
 
 import argparse
 import sys
@@ -12,7 +12,8 @@ import zipfile
 # Parser
 parser = argparse.ArgumentParser(description='Run TRiP on an a folder of images')
 parser.add_argument('-d','--img_directory', type=str, required=True, help='Path to images to crop, or to cropped images')
-parser.add_argument('-e','--img_extension', type=str, required=False, help='Image extension (e.g. JPG, PNG, TIF)', default="JPG"
+parser.add_argument('-e','--img_extension', type=str, required=False, help='Image extension (e.g. JPG, PNG, TIF)', default="JPG")
+parser.add_argument('-c','--combine', type=str, required=False, help='Specify whether to combine numbering of different zip files', default="True")
 parser.add_argument('-mt','--motion', type=str, required=False, help='Estimate motion', default=None)
 parser.add_argument('-m','--model', type=str, required=False, help='Fit model to motion data', default=None)
 parser.add_argument('-s','--start_img', type=int, required=False, help='Start image number', default=None)
@@ -53,11 +54,19 @@ if str(args.model) == "True":
 else:
     model = False
 
+if str(args.combine) == "True":
+    combine = True
+elif str(args.combine) == "False":
+    combine = False
+else:
+    print("Parameter combine must be either True or False")
+    sys.exit()
+
 # Run the functions
 def TRiP():
     start_all = time.time()
     # Check if images_path exists
-    assert os.path.exists(images_path), "I did not find the file at, " +str(images_path)
+    assert os.path.exists(images_path), "I did not find the folder at, " +str(images_path)
 
     
     start_time = time.time() # start timer
@@ -67,7 +76,7 @@ def TRiP():
     with zipfile.ZipFile(images_path, 'r') as zip_ref:
         zip_ref.extractall(img_path)
 
-    coordinates = autocrop(images_path, 12, 10)
+    coordinates = autocrop(images_path, 12, 0, 10, "../test/out_video.mp4")
     crop_coords = os.path.join(img_path, "crop.txt")
 
     with open(crop_coords, "w+") as f:
