@@ -79,19 +79,15 @@ def TRiP():
         for dir in dirs:
             dir_name = os.path.join(images_path, dir)
             print(dir_name)
-            video = os.path.join(dir_name, "video.mp4")
-            coordinates = autocrop(dir_name, 12, previous_plants, 10, video)
+            coordinates = autocrop(dir_name, 12, previous_plants, 10, f"../test/{dir_name}_video.mp4")
             crop_coords = os.path.join(dir_name, "crop.txt")
             with open(crop_coords, "w+") as f:
                 for object_num, rect in enumerate(coordinates):
                     number = object_num + 1 + previous_plants
                     f.write(f'plant_A{number:02} ')
                     f.write(' '.join(map(str, rect)) + '\n')
-            previous_plants = previous_plants + 12
-        input("Press Enter when you have made all desired changes to the crop.txt files")
-        for dir in dirs:
-            dir_name = os.path.join(images_path, dir)
             pt.crop_all(dir_name, crop_coords, img_extension, start_img=start_img, end_img=end_img)
+            previous_plants = previous_plants + 12
 
 
     # img_path = os.path.dirname(os.path.realpath(images_path))
