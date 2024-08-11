@@ -66,7 +66,7 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img):
         coords = crop_coords.iloc[plant,0]
         coords = coords.split(" ")[1:]  # This must change if using \t sep!!
         coords = [int(i) for i in coords] # Convert values to integers
-        values.append(tuple(coords))  # Append coords as tupple
+        values.append(tuple(coords))  # Append coords as tuple
 
     # Arrange keys and values in a dictionary
     regions = dict(zip(keys, values))
@@ -88,7 +88,7 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img):
             imj_row1 = coords[1] # hortizontal bottom
             imj_col2 = imj_col1 + coords[2] # vertical right
             imj_row2 = imj_row1 + coords[3] # horizontal top
-            # Veryfy path exists, otherwise create folder
+            # Verify path exists, otherwise create folder
             cropped_path = './cropped/' + plant + '/'  # path
             cropped_path = os.path.dirname(cropped_path) # convert to string
             if not os.path.exists(cropped_path):  # verify if exist
@@ -319,13 +319,13 @@ def estimate_motion(dirname,img_extension='JPG'):
 
 
 # Estimate motion for all
-def estimateAll(img_extension='JPG'):
+def estimateAll(indirname, outdirname, img_extension='JPG'):
     print("\n-----------------------------------")
     print("ESTIMATING MOTION...\n")   
 
     # Specify the input and output directories
-    indirname = './cropped/'
-    outdirname = './output/motion/'
+    #indirname = './cropped/'
+    #outdirname = './output/motion/'
     # CReate them if don't exist
     Path(indirname).mkdir(parents=True, exist_ok=True)
     Path(outdirname).mkdir(parents=True, exist_ok=True)
