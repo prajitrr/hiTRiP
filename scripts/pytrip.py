@@ -430,15 +430,16 @@ def ModelFitALL():
         # Get plant ID
         fn = k
         plantID = k.split('/')[-1].replace('.csv','')
-
+        
         if plantID == "all_plants":
             continue
         
-        dat = pd.read_csv(fn, header=None)
+        dat = pd.read_csv(fn, header=0)
         # Check if all values are the same, if so, skip this iteration, after printing an error message
-        if len(dat[0].unique()) == 1:
+        if len(dat.iloc[:,0].unique()) == 1:
             print(f"All values are the same for {plantID}. No model will be fitted for this plant.")
             continue
+
         dat.replace([np.inf, -np.inf], np.nan, inplace=True) # replace inf
         dat = dat.fillna(0) # Fill NA with zeros
         dat = dat - dat.mean()
