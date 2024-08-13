@@ -169,6 +169,7 @@ Images/
 __MACOSX/
 cropped
 output
+*.mp4
 
 #Temp TRiP Files
 .DS_Store

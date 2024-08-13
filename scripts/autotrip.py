@@ -12,6 +12,8 @@ import zipfile
 # Parser
 parser = argparse.ArgumentParser(description='Run TRiP on an a folder of images')
 parser.add_argument('-d','--img_directory', type=str, required=True, help='Path to images to crop, or to cropped images')
+parser.add_argument('-n','--number_objects', type=str, required=True, help='Number of objects in each image to detect',)
+parser.add_argument('-a','--automatic', type=str, required=False, help='Specify whether to perform automatic cropping or not', default="True")
 parser.add_argument('-e','--img_extension', type=str, required=False, help='Image extension (e.g. JPG, PNG, TIF)', default="JPG")
 parser.add_argument('-c','--combine', type=str, required=False, help='Specify whether to combine numbering of different folders', default="True")
 parser.add_argument('-mt','--motion', type=str, required=False, help='Estimate motion', default=None)
@@ -62,6 +64,14 @@ else:
     print("Parameter combine must be either True or False")
     sys.exit()
 
+if str(args.automatic) == "True":
+    automatic = True
+elif str(args.automatic) == "False":
+    automatic = False
+else:  
+    print("Parameter automatic must be either True or False")
+    sys.exit()
+
 # Run the functions
 def TRiP():
     start_all = time.time()
@@ -71,23 +81,47 @@ def TRiP():
     
     start_time = time.time() # start timer
 
-    for root, dirs, files in os.walk(images_path):
-        if len(files) != 0:
-            break
-        dirs.sort()
-        previous_plants = 0
-        for dir in dirs:
+    root, dirs, files = next(os.walk(images_path))
+    dirs.sort()
+    previous_plants = 0
+    num_dirs = len(dirs)
+    
+    if automatic:
+        print(f"---------------------------------------------------------------------")
+        print(f"PERFORMING OBJECT DETECTION ON {num_dirs} FOLDERS...")
+        for num, dir in enumerate(dirs):
+            print(f"Detecting objects in folder {num+1}/{num_dirs}: {dir}")
             dir_name = os.path.join(images_path, dir)
-            print(dir_name)
-            coordinates = autocrop(dir_name, 12, previous_plants, 10, f"../test/{dir_name}_video.mp4")
+            video = os.path.join(dir_name, f"_{dir}_video.mp4")
+            coordinates = autocrop(dir_name, int(args.number_objects), previous_plants, 10, video_name = video)
             crop_coords = os.path.join(dir_name, "crop.txt")
             with open(crop_coords, "w+") as f:
                 for object_num, rect in enumerate(coordinates):
                     number = object_num + 1 + previous_plants
                     f.write(f'plant_A{number:02} ')
                     f.write(' '.join(map(str, rect)) + '\n')
-            pt.crop_all(dir_name, crop_coords, img_extension, start_img=start_img, end_img=end_img)
-            previous_plants = previous_plants + 12
+            previous_plants += len(coordinates)
+        input("Press Enter to continue once you have made all desired changes to the crop.txt files")
+    
+    else:
+        print(f"---------------------------------------------------------------------")
+        print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS...")
+        for num, dir in enumerate(dirs):
+            print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
+            dir_name = os.path.join(images_path, dir)
+            crop_coords = os.path.join(dir_name, "crop.txt")
+            with open(crop_coords, "w+") as f:
+                f.write("")
+        input("Press Enter to continue once you have added coordinates to all the crop.txt files")
+    
+    print(f"----------------------------------------------------------------------")
+    print(f"CROPPING IMAGES IN {num_dirs} FOLDERS...")
+    for num, dir in enumerate(dirs):
+        print(f"Cropping images in folder {num+1}/{num_dirs}: {dir}")
+        dir_name = os.path.join(images_path, dir)
+        crop_coords = os.path.join(dir_name, "crop.txt")
+        pt.crop_all(dir_name, crop_coords, img_extension, start_img=start_img, end_img=end_img)
+    
 
 
     # img_path = os.path.dirname(os.path.realpath(images_path))

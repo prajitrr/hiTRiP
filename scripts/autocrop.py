@@ -124,7 +124,7 @@ def autocrop(file_path, num_objects, prev_objects=0, tolerance=5, grid_height=3,
         frame = cv2.imread(image,cv2.IMREAD_UNCHANGED)
         frame_out = frame.copy()
         for num, rect in enumerate(sorted_final_rectangles):
-            number = num + 1
+            number = num + 1 + prev_objects
             x, y, w, h = rect
             if min_dim > MINIMUM_EDGE:
                 unscale = min_dim/MINIMUM_EDGE
@@ -136,7 +136,12 @@ def autocrop(file_path, num_objects, prev_objects=0, tolerance=5, grid_height=3,
     video.release()
     
     cv2.destroyAllWindows()
-    return final_rectangles
+
+    if min_dim > MINIMUM_EDGE:
+        unscale = min_dim/MINIMUM_EDGE
+        sorted_final_rectangles = [(int(rect[0]*unscale), int(rect[1]*unscale), int(rect[2]*unscale), int(rect[3]*unscale)) for rect in sorted_final_rectangles]
+    
+    return sorted_final_rectangles
 
 def compare_contours(cnt1, cnt2):
     #Helper function for comparing contours by area

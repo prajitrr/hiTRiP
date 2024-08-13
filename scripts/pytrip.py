@@ -334,6 +334,7 @@ def estimateAll(indirname, outdirname, img_extension='JPG'):
     d = [f.path for f in os.scandir(indirname) if f.is_dir()]
     d = sorted(d)
 
+    all_data = pd.DataFrame()
     for k in d:
         # Get plant ID
         plantID = k.split('/')[-1].replace('.csv','')
@@ -342,12 +343,15 @@ def estimateAll(indirname, outdirname, img_extension='JPG'):
         # Check if motion was estimated
         if motion_x is None or motion_y is None:
             print(f"ERROR: Could not estimate motion for {plantID}")
+            all_data = pd.concat([all_data, pd.DataFrame([],columns=[f"{plantID}"])], axis=1)
             continue
         
         # Save vertical motion
-        df = pd.DataFrame(motion_y, columns=['Motion'])
+        df = pd.DataFrame(motion_y, columns=[f"{plantID}"])
+        all_data = pd.concat([all_data, df], axis=1)
+
         df.to_csv(f'./output/motion/{plantID}.csv', 
-                  index=False, header=False, na_rep='inf')
+                  index=False, header=True, na_rep='inf')
         # # Create motion figure
         # plt.figure(1)
         # plt.plot(motion_y, 'k',linewidth=1)
@@ -362,6 +366,9 @@ def estimateAll(indirname, outdirname, img_extension='JPG'):
         # plt.close()
 
         print(f"Estimated motion for {k}")
+    
+    all_data.to_csv(f'./output/motion/all_plants.csv', 
+                    index=False, header=True, na_rep='inf')
 
 
 
@@ -423,10 +430,14 @@ def ModelFitALL():
         # Get plant ID
         fn = k
         plantID = k.split('/')[-1].replace('.csv','')
+
+        if plantID == "all_plants":
+            continue
+        
         dat = pd.read_csv(fn, header=None)
         # Check if all values are the same, if so, skip this iteration, after printing an error message
         if len(dat[0].unique()) == 1:
-            print(f"ERROR: All values are the same for {plantID}")
+            print(f"All values are the same for {plantID}. No model will be fitted for this plant.")
             continue
         dat.replace([np.inf, -np.inf], np.nan, inplace=True) # replace inf
         dat = dat.fillna(0) # Fill NA with zeros
