@@ -3,7 +3,6 @@ import cv2
 
 #STL Imports
 import os
-import zipfile
 from functools import cmp_to_key
 
 #Global Variables

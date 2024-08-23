@@ -1,4 +1,5 @@
 from autocrop import autocrop
+from video import generate_video
 import pytrip as pt
 
 import argparse
@@ -13,7 +14,7 @@ import zipfile
 parser = argparse.ArgumentParser(description='Run TRiP on an a folder of images')
 parser.add_argument('-d','--img_directory', type=str, required=True, help='Path to images to crop, or to cropped images')
 parser.add_argument('-n','--number_objects', type=str, required=True, help='Number of objects in each image to detect',)
-parser.add_argument('-a','--automatic', type=str, required=False, help='Specify whether to perform automatic cropping or not', default="True")
+parser.add_argument('-a','--automatic', type=str, required=False, help='Specify whether to perform automatic cropping or not', default="False")
 parser.add_argument('-e','--img_extension', type=str, required=False, help='Image extension (e.g. JPG, PNG, TIF)', default="JPG")
 parser.add_argument('-c','--combine', type=str, required=False, help='Specify whether to combine numbering of different folders', default="True")
 parser.add_argument('-mt','--motion', type=str, required=False, help='Estimate motion', default=None)
@@ -103,7 +104,7 @@ def TRiP():
             previous_plants += len(coordinates)
         input("Press Enter to continue once you have made all desired changes to the crop.txt files")
     
-    else:
+    elif not automatic:
         print(f"---------------------------------------------------------------------")
         print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS...")
         for num, dir in enumerate(dirs):
@@ -113,6 +114,16 @@ def TRiP():
             with open(crop_coords, "w+") as f:
                 f.write("")
         input("Press Enter to continue once you have added coordinates to all the crop.txt files")
+
+        print(f"---------------------------------------------------------------------")
+        print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
+        for num, dir in enumerate(dirs):
+            print("Generating video for folder {}/{}: {}".format(num+1, num_dirs, dir))
+            dir_name = os.path.join(images_path, dir)
+            video = os.path.join(dir_name, f"_{dir}_video.mp4")
+            generate_video(dir_name, video)
+        
+        input("Press Enter to continue once you have made all desired changes to the crop.txt files based on the videos")
     
     print(f"----------------------------------------------------------------------")
     print(f"CROPPING IMAGES IN {num_dirs} FOLDERS...")
@@ -120,7 +131,7 @@ def TRiP():
         print(f"Cropping images in folder {num+1}/{num_dirs}: {dir}")
         dir_name = os.path.join(images_path, dir)
         crop_coords = os.path.join(dir_name, "crop.txt")
-        pt.crop_all(dir_name, crop_coords, img_extension, start_img=start_img, end_img=end_img)
+        pt.crop_all(dir_name, crop_coords, img_extension, start_img=start_img, end_img=end_img, out_dir=images_path)
     
 
 
@@ -143,7 +154,8 @@ def TRiP():
 
     if motion == True:
         start_time = time.time() # start timer
-        pt.estimateAll(indirname="./cropped/", outdirname="./output/motion",img_extension=img_extension) # Estimate motion
+        combined_csv_name = images_path.split("/")[-1] + "_all_plants"
+        pt.estimateAll(indirname=os.path.join(images_path, "cropped/"), outdirname=images_path, all_plants_name=combined_csv_name,img_extension=img_extension) # Estimate motion
         end_time = time.time()  # End timer
         total_time = round(end_time - start_time,2)
         print("\nTime to estimate motion: ", total_time, " seconds")
@@ -151,7 +163,7 @@ def TRiP():
     
     if model == True:
         start_time = time.time()
-        pt.ModelFitALL() # Fit model to motion data
+        pt.ModelFitALL(in_dir=images_path, out_dir=images_path) # Fit model to motion data
         end_time = time.time()  # End timer
         total_time = round(end_time - start_time,2)
         print("\nTime to fit model: ", total_time, " seconds")

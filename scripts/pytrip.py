@@ -23,8 +23,14 @@ import sys
 import time
 
 
+#Define blank object for csv formatting
+class BlankObj:
+    def __repr__(self):
+        return ""
+
+
 # Crop images
-def crop_all(images_path, cropfile_path, img_extension, start_img, end_img):
+def crop_all(images_path, cropfile_path, img_extension, start_img, end_img, out_dir):
     print("\n-----------------------------------")
     print("CROPPING IMAGES...\n")
     img_extension = '*.' + img_extension
@@ -89,8 +95,8 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img):
             imj_col2 = imj_col1 + coords[2] # vertical right
             imj_row2 = imj_row1 + coords[3] # horizontal top
             # Verify path exists, otherwise create folder
-            cropped_path = './cropped/' + plant + '/'  # path
-            cropped_path = os.path.dirname(cropped_path) # convert to string
+            cropped_path = os.path.join(out_dir, 'cropped', plant)  # path
+            #cropped_path = os.path.dirname(cropped_path) # convert to string
             if not os.path.exists(cropped_path):  # verify if exist
                 os.makedirs(cropped_path)
             # Define cropped image's full path
@@ -101,7 +107,7 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img):
             sub_image.save(cropped_path) # Save image
 
     # Print where images were saved
-    print("\nAll folders were saved in: ./cropped/")
+    print(f"\nAll folders were saved in: {out_dir}/cropped/")
 
 
 # Estimate derivatives
@@ -200,23 +206,35 @@ def estimate_motion(dirname,img_extension='JPG'):
         im = cv2.resize(im, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
         f.append({})
         f[c-1]['orig'] = im
+
+        # [0.2989, 0.5870, 0.1140] is a standard basis for RGB to grayscale conversion
         f[c-1]['im'] = np.dot(im[...,:3], [0.2989, 0.5870, 0.1140]).astype(np.float64)
+
         c += 1
     
     ydim, xdim = f[0]['im'].shape   # Double check if it isn't xdim, ydim instead.
     
     # compute motion
     # print('computing motion...')
+
+    # Define the number of taps
     taps = 7
+
+    # Define the Gaussian blur kernel and normalize and reshape it
     blur = [1, 6, 15, 20, 15, 6, 1]
     blur = np.array(blur) / np.sum(blur)
     blur = blur.reshape(1, -1)
     
     s = 1 # sub-sample spatially by this amount
+
+    #This is the number of frames that can be used to estimate the motion, where we lose 7 frames
     N = len(f) - (taps-1)
+
+    # // is floor division, does not do anything here since s = 1
     Vx = np.zeros((ydim//s, xdim//s, N))
     Vy = np.zeros((ydim//s, xdim//s, N))
     
+    # Loop through the subsets of frames, 7 at a time, computing optical flow
     for k in range(N):
         subset_f = f[k:k+taps]
         # print(f"Subset: {k} to {k+taps}")
@@ -319,7 +337,7 @@ def estimate_motion(dirname,img_extension='JPG'):
 
 
 # Estimate motion for all
-def estimateAll(indirname, outdirname, img_extension='JPG'):
+def estimateAll(indirname, outdirname, all_plants_name, img_extension='JPG'):
     print("\n-----------------------------------")
     print("ESTIMATING MOTION...\n")   
 
@@ -328,13 +346,16 @@ def estimateAll(indirname, outdirname, img_extension='JPG'):
     #outdirname = './output/motion/'
     # CReate them if don't exist
     Path(indirname).mkdir(parents=True, exist_ok=True)
-    Path(outdirname).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(outdirname, f'output/motion')).mkdir(parents=True, exist_ok=True)
 
-    # Get a list of cropped image sub-directories
+    # Get a list of cropped image subdirectories
     d = [f.path for f in os.scandir(indirname) if f.is_dir()]
     d = sorted(d)
 
     all_data = pd.DataFrame()
+    time_column = pd.DataFrame([], columns=[f"Time"])
+    all_data = pd.concat([all_data, time_column], axis=1)
+
     for k in d:
         # Get plant ID
         plantID = k.split('/')[-1].replace('.csv','')
@@ -343,14 +364,16 @@ def estimateAll(indirname, outdirname, img_extension='JPG'):
         # Check if motion was estimated
         if motion_x is None or motion_y is None:
             print(f"ERROR: Could not estimate motion for {plantID}")
-            all_data = pd.concat([all_data, pd.DataFrame([],columns=[f"{plantID}"])], axis=1)
+            all_data = pd.concat([all_data, pd.DataFrame([BlankObj(),BlankObj()],columns=[f"{plantID}"])], axis=1)
             continue
         
         # Save vertical motion
+        motion_y.insert(0, BlankObj())
+        motion_y.insert(0, BlankObj())
         df = pd.DataFrame(motion_y, columns=[f"{plantID}"])
         all_data = pd.concat([all_data, df], axis=1)
 
-        df.to_csv(f'./output/motion/{plantID}.csv', 
+        df.to_csv(os.path.join(outdirname, f'output/motion/{plantID}.csv'), 
                   index=False, header=True, na_rep='inf')
         # # Create motion figure
         # plt.figure(1)
@@ -367,7 +390,7 @@ def estimateAll(indirname, outdirname, img_extension='JPG'):
 
         print(f"Estimated motion for {k}")
     
-    all_data.to_csv(f'./output/motion/all_plants.csv', 
+    all_data.to_csv(os.path.join(outdirname, f'output/motion/{all_plants_name}.csv'), 
                     index=False, header=True, na_rep='inf')
 
 
@@ -401,7 +424,6 @@ def errorFunc(model, dat):
 def modelFunc(t, freq, phase, amp):
     return evaluateModel([freq, phase, amp], N=len(t))
 
-
 # Jacobian
 def jacFunc(t, freq, phase, amp):
     dfreq = -amp * np.sin(freq * 2 * np.pi / len(t) * t + phase) * 2 * np.pi / len(t) * t
@@ -410,15 +432,15 @@ def jacFunc(t, freq, phase, amp):
     return np.column_stack((dfreq, dphase, damp))
 
 # Fit model to motion data
-def ModelFitALL():
+def ModelFitALL(in_dir, out_dir):
     print("\n-----------------------------------")
     print("FITTING MODEL TO MOTION DATA...\n")
 
-    d = glob.glob(f"./output/motion/*.csv")
+    d = glob.glob(os.path.join(in_dir,"output/motion/*.csv"))
     d = sorted(d)
 
     # Create output directory if it don't exist
-    Path('./output/model/').mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(out_dir, 'output/model')).mkdir(parents=True, exist_ok=True)
 
     Path_Array = []
     Period_Array = []
@@ -431,7 +453,7 @@ def ModelFitALL():
         fn = k
         plantID = k.split('/')[-1].replace('.csv','')
         
-        if plantID == "all_plants":
+        if "all_plants" in plantID:
             continue
         
         dat = pd.read_csv(fn, header=0)
@@ -490,7 +512,7 @@ def ModelFitALL():
         plt.legend(['Data', 'Model'])
         plt.title('Frequency = {}'.format(round(model[0],2)))
         # Save the figure
-        plt.savefig(f'./output/model/model_{plantID}.png', 
+        plt.savefig(os.path.join(out_dir, f'output/model/model_{plantID}.png'), 
                     bbox_inches='tight', facecolor='w');
         # Close the figure
         plt.close()
@@ -552,4 +574,4 @@ def ModelFitALL():
          'RAE': rae_Array,   
         })
 
-    Models_data.to_csv('./output/model/MODELS_DATA.csv',index=False)
+    Models_data.to_csv(os.path.join(out_dir,'output/model/MODELS_DATA.csv'),index=False)
