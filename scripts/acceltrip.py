@@ -11,9 +11,11 @@ import zipfile
 
 
 # Parser
-parser = argparse.ArgumentParser(description='Run TRiP on an a folder of images')
+parser = argparse.ArgumentParser(description='Run accelTRiP on an a folder of images')
 parser.add_argument('-d','--img_directory', type=str, required=True, help='Path to images to crop, or to cropped images')
-parser.add_argument('-n','--number_objects', type=str, required=True, help='Number of objects in each image to detect',)
+
+#parser.add_argument('-n','--number_objects', type=str, required=True, help='Number of objects in each image to detect',)
+
 parser.add_argument('-a','--automatic', type=str, required=False, help='Specify whether to perform automatic cropping or not', default="False")
 parser.add_argument('-e','--img_extension', type=str, required=False, help='Image extension (e.g. JPG, PNG, TIF)', default="JPG")
 parser.add_argument('-c','--combine', type=str, required=False, help='Specify whether to combine numbering of different folders', default="True")
@@ -114,16 +116,27 @@ def TRiP():
             with open(crop_coords, "w+") as f:
                 f.write("")
         input("Press Enter to continue once you have added coordinates to all the crop.txt files")
-
-        print(f"---------------------------------------------------------------------")
-        print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
-        for num, dir in enumerate(dirs):
-            print("Generating video for folder {}/{}: {}".format(num+1, num_dirs, dir))
-            dir_name = os.path.join(images_path, dir)
-            video = os.path.join(dir_name, f"_{dir}_video.mp4")
-            generate_video(dir_name, video)
-        
-        input("Press Enter to continue once you have made all desired changes to the crop.txt files based on the videos")
+        while True:
+            print(f"---------------------------------------------------------------------")
+            print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
+            for num, dir in enumerate(dirs):
+                print("Generating video for folder {}/{}: {}".format(num+1, num_dirs, dir))
+                dir_name = os.path.join(images_path, dir)
+                video = os.path.join(dir_name, f"_{dir}_video.mp4")
+                generate_video(dir_name, video)
+            usr_input = input("Video was generated. Please view the video." + 
+                              "If you are satisfied, type next and press Enter to continue." + 
+                              "If you are not satisfied, first edit the crop.txt files, then type crop and press Enter to continue")
+            usr_input = usr_input.lower().strip()
+            while (usr_input != "next" and usr_input != "crop"):
+                usr_input = input("Invalid input. Please choose either next or crop as your input and press Enter to continue")
+                usr_input = usr_input.lower().strip()
+            if (usr_input == "next"):
+                break
+            elif (usr_input == "crop"):
+                continue
+            else:
+                 raise ValueError("Invalid input") 
     
     print(f"----------------------------------------------------------------------")
     print(f"CROPPING IMAGES IN {num_dirs} FOLDERS...")
@@ -171,7 +184,7 @@ def TRiP():
     
     end_all = time.time()
     total_time_all = round(end_all - start_all,2)
-    print("\nPyTRiP Execution completed!\n")
+    print("\naccelTRiP execution completed!\n")
     print("Total time: ", total_time_all, " seconds\n\n")
 
 
@@ -179,4 +192,4 @@ if __name__ == "__main__":
     TRiP()
 
 # Example usage:
-# python3 TRiP.py -d ../../input/ -c ../crop.txt -mt True -m True
+# python3 acceltrip.py -d ../../input/ -c ../crop.txt -mt True -m True
