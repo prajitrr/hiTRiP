@@ -124,12 +124,12 @@ def TRiP():
                 dir_name = os.path.join(images_path, dir)
                 video = os.path.join(dir_name, f"_{dir}_video.mp4")
                 generate_video(dir_name, video)
-            usr_input = input("Video was generated. Please view the video." + 
-                              "If you are satisfied, type next and press Enter to continue." + 
-                              "If you are not satisfied, first edit the crop.txt files, then type crop and press Enter to continue")
+            usr_input = input("Video was generated. Please view the video. \n" + 
+                              "If you are satisfied, type \"next\". Then, press Enter to continue. \n" + 
+                              "If you are not satisfied, first edit the crop.txt files, then type \"crop\". Then, press Enter to continue \n")
             usr_input = usr_input.lower().strip()
             while (usr_input != "next" and usr_input != "crop"):
-                usr_input = input("Invalid input. Please choose either next or crop as your input and press Enter to continue")
+                usr_input = input("Invalid input. Please choose either \"next\" or \"crop\" as your input. Then, press Enter to continue \n")
                 usr_input = usr_input.lower().strip()
             if (usr_input == "next"):
                 break
