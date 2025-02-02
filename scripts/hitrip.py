@@ -108,13 +108,17 @@ def TRiP():
     
     elif not automatic:
         print(f"---------------------------------------------------------------------")
-        print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS...")
+        print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS. Will not generate crop.txt files if already found...")
+
         for num, dir in enumerate(dirs):
             print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
             dir_name = os.path.join(images_path, dir)
             crop_coords = os.path.join(dir_name, "crop.txt")
-            with open(crop_coords, "w+") as f:
-                f.write("")
+            if not os.path.exists(crop_coords):
+                with open(crop_coords, "w+") as f:
+                    f.write("")
+            else:
+                print(f"A crop.txt file was already found in folder {dir}. Skipping...")
         input("Press Enter to continue once you have added coordinates to all the crop.txt files")
         while True:
             print(f"---------------------------------------------------------------------")
