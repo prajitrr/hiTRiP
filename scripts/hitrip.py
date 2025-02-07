@@ -111,14 +111,15 @@ def TRiP():
         print(f"---------------------------------------------------------------------")
 
         skip_master = False
-        if os.path.exists("./master_files/master_crop_global.txt"):
+        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "master_files/master_crop_global.txt")
+        if os.path.exists(master_crop_path_global):
             user_input_skip_master = ""
             while (user_input_skip_master != "y" and user_input_skip_master != "n"):
                 user_input_skip_master = input(f"Master crop file found. Would you like to use this file to generate individual crop files? (Y/N) \n")
                 user_input_skip_master = user_input_skip_master.lower().strip()
             if user_input_skip_master == "y":
                 print(f"Using master crop file to generate individual crop files...")
-                with open("./master_files/master_crop_global.txt", "r") as f:
+                with open(master_crop_path_global, "r") as f:
                     for line in f:
                         dir_name, crop_coords = line.split(FILE_SEPARATOR)
                         crop_path = os.path.join(images_path, dir_name, "crop.txt")
@@ -126,7 +127,7 @@ def TRiP():
                             f2.write(crop_coords)
             else:
                 skip_master = True
-        elif not os.path.exists("./master_files/master_crop_global.txt") or skip_master:
+        elif not os.path.exists(master_crop_path_global) or skip_master:
             print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS. Will not generate crop.txt files if already found...")
             for num, dir in enumerate(dirs):
                 print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
@@ -168,7 +169,7 @@ def TRiP():
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING MASTER crop.txt FILE...")
             master_crop_path = os.path.join(images_path, "master_crop.txt")
-            master_crop_path_global = "./master_files/master_crop_global.txt"
+            master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "master_files/master_crop_global.txt")
             with open(master_crop_path, "w+") as f, open(master_crop_path_global, "w+") as f2:
                 for num, dir in enumerate(dirs):
                     dir_name = os.path.join(dir)
