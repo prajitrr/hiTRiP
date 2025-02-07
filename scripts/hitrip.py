@@ -148,8 +148,6 @@ def TRiP():
                         directory_num = directories_list.index(directory_name)
                         crop_path = os.path.join(images_path, directory_paths[directory_num], "crop.txt")
                         with open(crop_path, "a+") as f2:
-                            print(crop_path)
-                            print(crop_coords)
                             f2.write(crop_coords)
             else:
                 skip_master = True
