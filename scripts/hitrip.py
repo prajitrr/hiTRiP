@@ -148,6 +148,8 @@ def TRiP():
                         directory_num = directories_list.index(directory_name)
                         crop_path = os.path.join(images_path, directory_paths[directory_num], "crop.txt")
                         with open(crop_path, "a+") as f2:
+                            print(crop_path)
+                            print(crop_coords)
                             f2.write(crop_coords)
             else:
                 skip_master = True
@@ -186,12 +188,12 @@ def TRiP():
                  raise ValueError("Invalid input") 
         master_crop_generation = ""
         while (master_crop_generation != "y" and master_crop_generation != "n"):
-            master_crop_generation = input("Would you like to generate a master crop.txt file? (Y/N) \n")
+            master_crop_generation = input("Would you like to overwrite the global master crop.txt file in the scripts folder? (Y/N) \n")
             master_crop_generation = master_crop_generation.lower().strip()
         
         if master_crop_generation == "y":
             print(f"---------------------------------------------------------------------")
-            print(f"GENERATING MASTER crop.txt FILE...")
+            print(f"OVERWRITING GLOBAL MASTER crop.txt FILE...")
             master_crop_path = os.path.join(images_path, "master_crop.txt")
             master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
             with open(master_crop_path, "w+") as f, open(master_crop_path_global, "w+") as f2:
@@ -211,6 +213,22 @@ def TRiP():
                 f.truncate()
                 f2.seek(f2.tell() - 1, os.SEEK_SET)
                 f2.truncate()
+        else:
+            master_crop_path = os.path.join(images_path, "master_crop.txt")
+            with open(master_crop_path, "w+") as f:
+                for num, dir in enumerate(dirs):
+                    dir_name = os.path.join(dir)
+                    dir_name_full = os.path.join(images_path, dir)
+                    crop_coords = os.path.join(dir_name_full, "crop.txt")
+                    with open(crop_coords, "r") as crop_file:
+                        for line in crop_file:
+                            f.write("Directory " + str(num + 1) + FILE_SEPARATOR + line)
+                    f.write("\n")
+                
+                #Remove last line break
+                f.seek(f.tell() - 1, os.SEEK_SET)
+                f.truncate()
+        
             
     
     print(f"----------------------------------------------------------------------")
