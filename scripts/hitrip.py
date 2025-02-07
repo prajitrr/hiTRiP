@@ -130,18 +130,20 @@ def TRiP():
                 with open(master_crop_path_global, "r") as f:
                     for line in f:
                         dir_name, _ = line.split(FILE_SEPARATOR)
-                        directories_list += dir_name
+                        directories_list.append(dir_name)
                 directories_list = remove_duplicates(directories_list)
 
                 directory_paths = []
                 for num, dir in enumerate(directories_list):
-                    directory = askdirectory(f"Please select the directory containing the images for {dir}")
+                    print(f"Select the directory for folder {num+1}/{len(directories_list)}: {dir}")
+                    directory = askdirectory(initialdir=images_path)
                     directory_paths.append(directory)
                 
                 with open(master_crop_path_global, "r") as f:
                     for num, line in enumerate(f):
-                        _, crop_coords = line.split(FILE_SEPARATOR)
-                        crop_path = os.path.join(images_path, directory_paths[num], "crop.txt")
+                        directory_name, crop_coords = line.split(FILE_SEPARATOR)
+                        directory_num = directories_list.index(directory_name)
+                        crop_path = os.path.join(images_path, directory_paths[directory_num], "crop.txt")
                         with open(crop_path, "w+") as f2:
                             f2.write(crop_coords)
             else:
@@ -196,8 +198,8 @@ def TRiP():
                     crop_coords = os.path.join(dir_name_full, "crop.txt")
                     with open(crop_coords, "r") as crop_file:
                         for line in crop_file:
-                            f.write("Directory " + str(num) + FILE_SEPARATOR + line)
-                            f2.write("Directory " + str(num) + FILE_SEPARATOR + line)
+                            f.write("Directory " + str(num + 1) + FILE_SEPARATOR + line)
+                            f2.write("Directory " + str(num + 1) + FILE_SEPARATOR + line)
                     f.write("\n")
                     f2.write("\n")
                 
