@@ -1,6 +1,8 @@
 from autocrop import autocrop
 from video import generate_video
 import pytrip as pt
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
 
 import argparse
 import sys
@@ -10,6 +12,11 @@ import zipfile
 
 
 FILE_SEPARATOR = ".........."
+
+def remove_duplicates(a_list):
+    remove_duplicates = set()
+    remove_duplicates_add = remove_duplicates.add
+    return [x for x in a_list if not (x in remove_duplicates or remove_duplicates_add(x))]
 
 # Parser
 parser = argparse.ArgumentParser(description='Run accelTRiP on an a folder of images')
@@ -119,10 +126,22 @@ def TRiP():
                 user_input_skip_master = user_input_skip_master.lower().strip()
             if user_input_skip_master == "y":
                 print(f"Using master crop file to generate individual crop files...")
+                directories_list = []
                 with open(master_crop_path_global, "r") as f:
                     for line in f:
-                        dir_name, crop_coords = line.split(FILE_SEPARATOR)
-                        crop_path = os.path.join(images_path, dir_name, "crop.txt")
+                        dir_name, _ = line.split(FILE_SEPARATOR)
+                        directories_list += dir_name
+                directories_list = remove_duplicates(directories_list))
+
+                directory_paths = []
+                for num, dir in enumerate(directories_list):
+                    directory = askdirectory(f"Please select the directory containing the images for {dir}")
+                    directory_paths.append(directory)
+                
+                with open(master_crop_path_global, "r") as f:
+                    for num, line in enumerate(f):
+                        _, crop_coords = line.split(FILE_SEPARATOR)
+                        crop_path = os.path.join(images_path, directory_paths[num], "crop.txt")
                         with open(crop_path, "w+") as f2:
                             f2.write(crop_coords)
             else:
@@ -177,8 +196,17 @@ def TRiP():
                     crop_coords = os.path.join(dir_name_full, "crop.txt")
                     with open(crop_coords, "r") as crop_file:
                         for line in crop_file:
-                            f.write(dir_name + FILE_SEPARATOR + line)
-                            f2.write(dir_name + FILE_SEPARATOR + line)
+                            f.write("Directory " + str(num) + FILE_SEPARATOR + line)
+                            f2.write("Directory " + str(num) + FILE_SEPARATOR + line)
+                    f.write("\n")
+                    f2.write("\n")
+                
+                #Remove last line break
+                f.seek(f.tell() - 1, os.SEEK_SET)
+                f.truncate()
+                f2.seek(f2.tell() - 1, os.SEEK_SET)
+                f2.truncate()
+            
     
     print(f"----------------------------------------------------------------------")
     print(f"CROPPING IMAGES IN {num_dirs} FOLDERS...")
