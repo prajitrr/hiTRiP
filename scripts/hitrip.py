@@ -111,7 +111,7 @@ def TRiP():
         print(f"---------------------------------------------------------------------")
 
         skip_master = False
-        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "master_files/master_crop_global.txt")
+        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
         if os.path.exists(master_crop_path_global):
             user_input_skip_master = ""
             while (user_input_skip_master != "y" and user_input_skip_master != "n"):
@@ -169,7 +169,7 @@ def TRiP():
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING MASTER crop.txt FILE...")
             master_crop_path = os.path.join(images_path, "master_crop.txt")
-            master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "master_files/master_crop_global.txt")
+            master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
             with open(master_crop_path, "w+") as f, open(master_crop_path_global, "w+") as f2:
                 for num, dir in enumerate(dirs):
                     dir_name = os.path.join(dir)
