@@ -131,7 +131,7 @@ def TRiP():
                     for line in f:
                         dir_name, _ = line.split(FILE_SEPARATOR)
                         directories_list += dir_name
-                directories_list = remove_duplicates(directories_list))
+                directories_list = remove_duplicates(directories_list)
 
                 directory_paths = []
                 for num, dir in enumerate(directories_list):
