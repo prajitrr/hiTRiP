@@ -138,13 +138,18 @@ def TRiP():
                     print(f"Select the directory for folder {num+1}/{len(directories_list)}: {dir}")
                     directory = askdirectory(initialdir=images_path)
                     directory_paths.append(directory)
-                
+                for num, dir in enumerate(directory_paths):
+                    crop_path = os.path.join(images_path, dir, "crop.txt")
+                    with open(crop_path, "w+") as f:
+                        f.write("")
                 with open(master_crop_path_global, "r") as f:
                     for num, line in enumerate(f):
                         directory_name, crop_coords = line.split(FILE_SEPARATOR)
                         directory_num = directories_list.index(directory_name)
                         crop_path = os.path.join(images_path, directory_paths[directory_num], "crop.txt")
-                        with open(crop_path, "w+") as f2:
+                        with open(crop_path, "a+") as f2:
+                            print(crop_path)
+                            print(crop_coords)
                             f2.write(crop_coords)
             else:
                 skip_master = True
