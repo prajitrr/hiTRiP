@@ -9,6 +9,7 @@ import os
 import zipfile
 
 
+FILE_SEPARATOR = ".........."
 
 # Parser
 parser = argparse.ArgumentParser(description='Run accelTRiP on an a folder of images')
@@ -108,18 +109,35 @@ def TRiP():
     
     elif not automatic:
         print(f"---------------------------------------------------------------------")
-        print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS. Will not generate crop.txt files if already found...")
 
-        for num, dir in enumerate(dirs):
-            print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
-            dir_name = os.path.join(images_path, dir)
-            crop_coords = os.path.join(dir_name, "crop.txt")
-            if not os.path.exists(crop_coords):
-                with open(crop_coords, "w+") as f:
-                    f.write("")
+        skip_master = False
+        if os.path.exists("./master_files/master_crop_global.txt"):
+            user_input_skip_master = ""
+            while (user_input_skip_master != "y" and user_input_skip_master != "n"):
+                user_input_skip_master = input(f"Master crop file found. Would you like to use this file to generate individual crop files? (Y/N) \n")
+                user_input_skip_master = user_input_skip_master.lower().strip()
+            if user_input_skip_master == "y":
+                print(f"Using master crop file to generate individual crop files...")
+                with open("./master_files/master_crop_global.txt", "r") as f:
+                    for line in f:
+                        dir_name, crop_coords = line.split(FILE_SEPARATOR)
+                        crop_path = os.path.join(images_path, dir_name, "crop.txt")
+                        with open(crop_path, "w+") as f2:
+                            f2.write(crop_coords)
             else:
-                print(f"A crop.txt file was already found in folder {dir}. Skipping...")
-        input("Press Enter to continue once you have added coordinates to all the crop.txt files")
+                skip_master = True
+        elif not os.path.exists("./master_files/master_crop_global.txt") or skip_master:
+            print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS. Will not generate crop.txt files if already found...")
+            for num, dir in enumerate(dirs):
+                print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
+                dir_name = os.path.join(images_path, dir)
+                crop_coords = os.path.join(dir_name, "crop.txt")
+                if not os.path.exists(crop_coords):
+                    with open(crop_coords, "w+") as f:
+                        f.write("")
+                else:
+                    print(f"A crop.txt file was already found in folder {dir}. Skipping...")
+            input("Press Enter to continue once you have added coordinates to all the crop.txt files")
         while True:
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
@@ -141,6 +159,24 @@ def TRiP():
                 continue
             else:
                  raise ValueError("Invalid input") 
+        master_crop_generation = ""
+        while (master_crop_generation != "y" and master_crop_generation != "n"):
+            master_crop_generation = input("Would you like to generate a master crop.txt file? (Y/N) \n")
+            master_crop_generation = master_crop_generation.lower().strip()
+        
+        if master_crop_generation == "y":
+            print(f"---------------------------------------------------------------------")
+            print(f"GENERATING MASTER crop.txt FILE...")
+            master_crop_path = os.path.join(images_path, "master_crop.txt")
+            master_crop_path_global = "./master_files/master_crop_global.txt"
+            with open(master_crop_path, "w+") as f, open(master_crop_path_global, "w+") as f2:
+                for num, dir in enumerate(dirs):
+                    dir_name = os.path.join(dir)
+                    crop_coords = os.path.join(dir_name, "crop.txt")
+                    with open(crop_coords, "r") as crop_file:
+                        for line in crop_file:
+                            f.write(dir_name + FILE_SEPARATOR + line)
+                            f2.write(dir_name + FILE_SEPARATOR + line)
     
     print(f"----------------------------------------------------------------------")
     print(f"CROPPING IMAGES IN {num_dirs} FOLDERS...")
