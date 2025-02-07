@@ -173,7 +173,8 @@ def TRiP():
             with open(master_crop_path, "w+") as f, open(master_crop_path_global, "w+") as f2:
                 for num, dir in enumerate(dirs):
                     dir_name = os.path.join(dir)
-                    crop_coords = os.path.join(dir_name, "crop.txt")
+                    dir_name_full = os.path.join(images_path, dir)
+                    crop_coords = os.path.join(dir_name_full, "crop.txt")
                     with open(crop_coords, "r") as crop_file:
                         for line in crop_file:
                             f.write(dir_name + FILE_SEPARATOR + line)
