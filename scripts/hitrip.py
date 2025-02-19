@@ -9,9 +9,15 @@ import sys
 import time
 import os
 import zipfile
+import re
 
 
 FILE_SEPARATOR = ".........."
+
+def natural_sort(l): 
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key=alphanum_key)
 
 def remove_duplicates(a_list):
     remove_duplicates = set()
@@ -115,76 +121,75 @@ def TRiP():
         input("Press Enter to continue once you have made all desired changes to the crop.txt files")
     
     elif not automatic:
-        print(f"---------------------------------------------------------------------")
-
-        skip_master = False
-        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
-        if os.path.exists(master_crop_path_global):
-            user_input_skip_master = ""
-            while (user_input_skip_master != "y" and user_input_skip_master != "n"):
-                user_input_skip_master = input(f"Master crop file found. Would you like to use this file to generate individual crop files? (Y/N) \n")
-                user_input_skip_master = user_input_skip_master.lower().strip()
-            if user_input_skip_master == "y":
-                print(f"Using master crop file to generate individual crop files...")
-                directories_list = []
-                with open(master_crop_path_global, "r") as f:
-                    for line in f:
-                        dir_name, _ = line.split(FILE_SEPARATOR)
-                        directories_list += dir_name
-                directories_list = remove_duplicates(directories_list)
-
-                directory_paths = []
-                for num, dir in enumerate(directories_list):
-                    directory = askdirectory(f"Please select the directory containing the images for {dir}")
-                    directory_paths.append(directory)
-                
-                with open(master_crop_path_global, "r") as f:
-                    for num, line in enumerate(f):
-                        _, crop_coords = line.split(FILE_SEPARATOR)
-                        crop_path = os.path.join(images_path, directory_paths[num], "crop.txt")
-                        with open(crop_path, "w+") as f2:
-                            f2.write(crop_coords)
-            else:
-                skip_master = True
-        elif not os.path.exists(master_crop_path_global) or skip_master:
-            print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS. Will not generate crop.txt files if already found...")
-            for num, dir in enumerate(dirs):
-                print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
-                dir_name = os.path.join(images_path, dir)
-                crop_coords = os.path.join(dir_name, "crop.txt")
-                if not os.path.exists(crop_coords):
-                    with open(crop_coords, "w+") as f:
-                        f.write("")
-                else:
-                    print(f"A crop.txt file was already found in folder {dir}. Skipping...")
-            input("Press Enter to continue once you have added coordinates to all the crop.txt files")
-        while True:
+        use_master_crop = ""
+        while (use_master_crop != "y" and use_master_crop != "n"):
+            use_master_crop = input("Would you like to use a master crop file? (Y/N) \n")
+            use_master_crop = use_master_crop.lower().strip()
+        if use_master_crop == "y":
             print(f"---------------------------------------------------------------------")
-            print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
-            for num, dir in enumerate(dirs):
-                print("Generating video for folder {}/{}: {}".format(num+1, num_dirs, dir))
-                dir_name = os.path.join(images_path, dir)
-                video = os.path.join(dir_name, f"_{dir}_video.mp4")
-                generate_video(dir_name, video)
-            usr_input = input("Video was generated. Please view the video. \n" + 
-                              "If you are satisfied, type \"next\". Then, press Enter to continue. \n" + 
-                              "If you are not satisfied, first edit the crop.txt files, then type \"crop\". Then, press Enter to continue. \n")
-            usr_input = usr_input.lower().strip()
-            while (usr_input != "next" and usr_input != "crop"):
-                usr_input = input("Invalid input. Please choose either \"next\" or \"crop\" as your input. Then, press Enter to continue. \n")
+
+            skip_master = False
+            master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
+            if os.path.exists(master_crop_path_global):
+                user_input_skip_master = ""
+                while (user_input_skip_master != "y" and user_input_skip_master != "n"):
+                    user_input_skip_master = input(f"Master crop file found. Would you like to use this file to generate individual crop files? (Y/N) \n")
+                    user_input_skip_master = user_input_skip_master.lower().strip()
+                if user_input_skip_master == "y":
+                    print(f"Using master crop file to generate individual crop files...")
+                    sorted_dirs = natural_sort(dirs)
+
+                    with open(master_crop_path_global, "r") as f:
+                        for directory in sorted_dirs:
+                            crop_path = os.path.join(images_path, directory, "crop.txt")
+                            with open(crop_path, "w+") as f2:
+                                for crop_coords in f:
+                                    if line == "\n":
+                                        break
+                                    f2.write(crop_coords)
+                                                    
+                else:
+                    skip_master = True
+            if not os.path.exists(master_crop_path_global) or skip_master:
+                master_crop_new_path = os.path.join(images_path, "master_crop.txt")
+                print(f"Previous master crop file not found/not in use. A new master crop file has been created in the experiment folder, {images_path}. Please add coordinates to this file.")
+                input("Press Enter to continue once you have added coordinates to the master crop file")
+                
+
+                with open(master_crop_new_path, "r") as f:
+                        for directory in sorted_dirs:
+                            crop_path = os.path.join(images_path, directory, "crop.txt")
+                            with open(crop_path, "w+") as f2:
+                                for crop_coords in f:
+                                    if line == "\n":
+                                        break
+                                    f2.write(crop_coords)
+            while True:
+                print(f"---------------------------------------------------------------------")
+                print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
+                for num, dir in enumerate(dirs):
+                    print("Generating video for folder {}/{}: {}".format(num+1, num_dirs, dir))
+                    dir_name = os.path.join(images_path, dir)
+                    video = os.path.join(dir_name, f"_{dir}_video.mp4")
+                    generate_video(dir_name, video)
+                usr_input = input("Video was generated. Please view the video. \n" + 
+                                "If you are satisfied, type \"next\". Then, press Enter to continue. \n" + 
+                                "If you are not satisfied, first edit the crop.txt files, then type \"crop\". Then, press Enter to continue. \n")
                 usr_input = usr_input.lower().strip()
-            if (usr_input == "next"):
-                break
-            elif (usr_input == "crop"):
-                continue
-            else:
-                 raise ValueError("Invalid input") 
-        master_crop_generation = ""
-        while (master_crop_generation != "y" and master_crop_generation != "n"):
-            master_crop_generation = input("Would you like to generate a master crop.txt file? (Y/N) \n")
-            master_crop_generation = master_crop_generation.lower().strip()
-        
-        if master_crop_generation == "y":
+                while (usr_input != "next" and usr_input != "crop"):
+                    usr_input = input("Invalid input. Please choose either \"next\" or \"crop\" as your input. Then, press Enter to continue. \n")
+                    usr_input = usr_input.lower().strip()
+                if (usr_input == "next"):
+                    break
+                elif (usr_input == "crop"):
+                    continue
+                else:
+                    raise ValueError("Invalid input") 
+            master_crop_save = ""
+            while (master_crop_save != "y" and master_crop_save != "n"):
+                master_crop_save = input("Would you like to save the master crop.txt file globally? (Y/N) \n")
+                master_crop_save = master_crop_save.lower().strip()
+            
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING MASTER crop.txt FILE...")
             master_crop_path = os.path.join(images_path, "master_crop.txt")
@@ -196,8 +201,8 @@ def TRiP():
                     crop_coords = os.path.join(dir_name_full, "crop.txt")
                     with open(crop_coords, "r") as crop_file:
                         for line in crop_file:
-                            f.write("Directory " + str(num) + FILE_SEPARATOR + line)
-                            f2.write("Directory " + str(num) + FILE_SEPARATOR + line)
+                            f.write(line)
+                            f2.write(line)
                     f.write("\n")
                     f2.write("\n")
                 
@@ -207,6 +212,41 @@ def TRiP():
                 f2.seek(f2.tell() - 1, os.SEEK_SET)
                 f2.truncate()
             
+            if master_crop_save == "n":
+                os.remove(master_crop_path_global)
+        else:
+            print(f"---------------------------------------------------------------------")
+            print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS...")
+            for num, dir in enumerate(dirs):
+                print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
+                dir_name = os.path.join(images_path, dir)
+                crop_coords = os.path.join(dir_name, "crop.txt")
+                with open(crop_coords, "w+") as f:
+                    f.write("")
+            input("Press Enter to continue once you have added coordinates to all the crop.txt files")
+            while True:
+                print(f"---------------------------------------------------------------------")
+                print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
+                for num, dir in enumerate(dirs):
+                    print("Generating video for folder {}/{}: {}".format(num+1, num_dirs, dir))
+                    dir_name = os.path.join(images_path, dir)
+                    video = os.path.join(dir_name, f"_{dir}_video.mp4")
+                    generate_video(dir_name, video)
+                usr_input = input("Video was generated. Please view the video. \n" + 
+                                "If you are satisfied, type \"next\". Then, press Enter to continue. \n" + 
+                                "If you are not satisfied, first edit the crop.txt files, then type \"crop\". Then, press Enter to continue. \n")
+                usr_input = usr_input.lower().strip()
+                while (usr_input != "next" and usr_input != "crop"):
+                    usr_input = input("Invalid input. Please choose either \"next\" or \"crop\" as your input. Then, press Enter to continue. \n")
+                    usr_input = usr_input.lower().strip()
+                if (usr_input == "next"):
+                    break
+                elif (usr_input == "crop"):
+                    continue
+                else:
+                    raise ValueError("Invalid input") 
+
+
     
     print(f"----------------------------------------------------------------------")
     print(f"CROPPING IMAGES IN {num_dirs} FOLDERS...")
@@ -254,7 +294,7 @@ def TRiP():
     
     end_all = time.time()
     total_time_all = round(end_all - start_all,2)
-    print("\naccelTRiP execution completed!\n")
+    print("\nhiTRiP execution completed!\n")
     print("Total time: ", total_time_all, " seconds\n\n")
 
 
