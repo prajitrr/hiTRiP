@@ -121,6 +121,7 @@ def TRiP():
         input("Press Enter to continue once you have made all desired changes to the crop.txt files")
     
     elif not automatic:
+        sorted_dirs = natural_sort(dirs)
         use_master_crop = ""
         while (use_master_crop != "y" and use_master_crop != "n"):
             use_master_crop = input("Would you like to use a master crop file? (Y/N) \n")
@@ -137,7 +138,7 @@ def TRiP():
                     user_input_skip_master = user_input_skip_master.lower().strip()
                 if user_input_skip_master == "y":
                     print(f"Using master crop file to generate individual crop files...")
-                    sorted_dirs = natural_sort(dirs)
+                    
 
                     with open(master_crop_path_global, "r") as f:
                         for directory in sorted_dirs:
