@@ -164,7 +164,7 @@ def TRiP():
                             crop_path = os.path.join(images_path, directory, "crop.txt")
                             with open(crop_path, "w+") as f2:
                                 for crop_coords in f:
-                                    if line == "\n":
+                                    if crop_coords == "\n":
                                         break
                                     f2.write(crop_coords)
             while True:
