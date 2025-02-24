@@ -227,7 +227,7 @@ def TRiP():
                         dir_name = os.path.join(dir)
                         dir_name_full = os.path.join(images_path, dir)
                         crop_coords = os.path.join(dir_name_full, "crop.txt")
-                        with open(crop_coords, "r") as crop_file:
+                        with open(crop_coords, "") as crop_file:
                             for line in crop_file:
                                 f.write(line)
                         f.write("\n")

@@ -222,12 +222,12 @@ def TRiP():
                 f.truncate()
                 
             if master_crop_save == "y":    
-                with open(master_crop_path_global, "w+") as f:
+") as f:
                     for num, dir in enumerate(sorted_dirs):
                         dir_name = os.path.join(dir)
                         dir_name_full = os.path.join(images_path, dir)
                         crop_coords = os.path.join(dir_name_full, "crop.txt")
-                        with open(crop_coords, "r") as crop_file:
+                        with open(crop_coords, "w+") as crop_file:
                             for line in crop_file:
                                 f.write(line)
                         f.write("\n")
