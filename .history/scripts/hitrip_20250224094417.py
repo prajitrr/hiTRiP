@@ -170,7 +170,6 @@ def TRiP():
                                     if crop_coords == "\n":
                                         break
                                     f2.write(crop_coords)
-            unsatisfied = False
             while True:
                 print(f"---------------------------------------------------------------------")
                 print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")

@@ -170,9 +170,9 @@ def TRiP():
                                     if crop_coords == "\n":
                                         break
                                     f2.write(crop_coords)
-            unsatisfied = False
             while True:
                 print(f"---------------------------------------------------------------------")
+                unsatisfied = False
                 print(f"GENERATING VIDEOS FOR {num_dirs} FOLDERS...")
                 for num, dir in enumerate(sorted_dirs):
                     print("Generating video for folder {}/{}: {}".format(num+1, num_dirs, dir))
@@ -194,7 +194,7 @@ def TRiP():
                 else:
                     raise ValueError("Invalid input") 
             master_crop_save = ""
-            if not(not unsatisfied and prev_master):
+            if not unsatisfied and prev_master:
                 while (master_crop_save != "y" and master_crop_save != "n"):
                     master_crop_save = input("Would you like to save the master crop.txt file globally? (Y/N) \n")
                     master_crop_save = master_crop_save.lower().strip()
