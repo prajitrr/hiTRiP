@@ -200,7 +200,7 @@ def TRiP():
                     master_crop_save = master_crop_save.lower().strip()
 
             else:
-                master_crop_save = "n"        
+                        
             
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING MASTER crop.txt FILE...")

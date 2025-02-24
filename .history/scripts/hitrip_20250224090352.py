@@ -198,9 +198,6 @@ def TRiP():
                 while (master_crop_save != "y" and master_crop_save != "n"):
                     master_crop_save = input("Would you like to save the master crop.txt file globally? (Y/N) \n")
                     master_crop_save = master_crop_save.lower().strip()
-
-            else:
-                master_crop_save = "n"        
             
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING MASTER crop.txt FILE...")

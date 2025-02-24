@@ -130,7 +130,6 @@ def TRiP():
             print(f"---------------------------------------------------------------------")
 
             skip_master = False
-            prev_master = False
             master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
             if os.path.exists(master_crop_path_global):
                 user_input_skip_master = ""
@@ -138,7 +137,6 @@ def TRiP():
                     user_input_skip_master = input(f"Master crop file found. Would you like to use this file to generate individual crop files? (Y/N) \n")
                     user_input_skip_master = user_input_skip_master.lower().strip()
                 if user_input_skip_master == "y":
-                    prev_master = True
                     print(f"Using master crop file to generate individual crop files...")
                     
 
@@ -194,13 +192,10 @@ def TRiP():
                 else:
                     raise ValueError("Invalid input") 
             master_crop_save = ""
-            if not(unsatisfied and not prev_master):
+            
                 while (master_crop_save != "y" and master_crop_save != "n"):
                     master_crop_save = input("Would you like to save the master crop.txt file globally? (Y/N) \n")
                     master_crop_save = master_crop_save.lower().strip()
-
-            else:
-                master_crop_save = "n"        
             
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING MASTER crop.txt FILE...")

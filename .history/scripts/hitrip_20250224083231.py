@@ -130,7 +130,6 @@ def TRiP():
             print(f"---------------------------------------------------------------------")
 
             skip_master = False
-            prev_master = False
             master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
             if os.path.exists(master_crop_path_global):
                 user_input_skip_master = ""
@@ -138,7 +137,6 @@ def TRiP():
                     user_input_skip_master = input(f"Master crop file found. Would you like to use this file to generate individual crop files? (Y/N) \n")
                     user_input_skip_master = user_input_skip_master.lower().strip()
                 if user_input_skip_master == "y":
-                    prev_master = True
                     print(f"Using master crop file to generate individual crop files...")
                     
 
@@ -189,25 +187,21 @@ def TRiP():
                 if (usr_input == "next"):
                     break
                 elif (usr_input == "crop"):
-                    unsatisfied = True
+                    
                     continue
                 else:
                     raise ValueError("Invalid input") 
             master_crop_save = ""
-            if not(unsatisfied and not prev_master):
-                while (master_crop_save != "y" and master_crop_save != "n"):
-                    master_crop_save = input("Would you like to save the master crop.txt file globally? (Y/N) \n")
-                    master_crop_save = master_crop_save.lower().strip()
-
-            else:
-                master_crop_save = "n"        
+            while (master_crop_save != "y" and master_crop_save != "n"):
+                master_crop_save = input("Would you like to save the master crop.txt file globally? (Y/N) \n")
+                master_crop_save = master_crop_save.lower().strip()
             
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING MASTER crop.txt FILE...")
             master_crop_file_name = images_path.split("/")[-1] + "_crop.txt"
             master_crop_path = os.path.join(images_path, master_crop_path)
             master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
-            with open(master_crop_path, "w+") as f:
+            with open(master_crop_path, "w+") as f, open(master_crop_path_global, "w+") as f2:
                 for num, dir in enumerate(sorted_dirs):
                     dir_name = os.path.join(dir)
                     dir_name_full = os.path.join(images_path, dir)
@@ -215,28 +209,18 @@ def TRiP():
                     with open(crop_coords, "r") as crop_file:
                         for line in crop_file:
                             f.write(line)
+                            f2.write(line)
                     f.write("\n")
+                    f2.write("\n")
                 
                 #Remove last line break
                 f.seek(f.tell() - 1, os.SEEK_SET)
                 f.truncate()
-                
-            if master_crop_save == "y":    
-                with open(master_crop_path_global, "r") as f:
-                    for num, dir in enumerate(sorted_dirs):
-                        dir_name = os.path.join(dir)
-                        dir_name_full = os.path.join(images_path, dir)
-                        crop_coords = os.path.join(dir_name_full, "crop.txt")
-                        with open(crop_coords, "w+") as crop_file:
-                            for line in crop_file:
-                                f.write(line)
-                        f.write("\n")
-
-                    #Remove last line break
-                    f.seek(f.tell() - 1, os.SEEK_SET)
-                    f.truncate()            
-                            
+                f2.seek(f2.tell() - 1, os.SEEK_SET)
+                f2.truncate()
             
+            if master_crop_save == "n":
+                os.remove(master_crop_path_global)
         else:
             print(f"---------------------------------------------------------------------")
             print(f"GENERATING crop.txt FILES FOR {num_dirs} FOLDERS...")
