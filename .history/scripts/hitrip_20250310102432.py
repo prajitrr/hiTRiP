@@ -190,7 +190,7 @@ def TRiP():
     # Use basename instead of split for Windows compatibility
     master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
     master_crop_path = os.path.join(images_path, master_crop_file_name)
-    master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_crop.txt")
+    master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_crop_global.txt")
     
     # Ensure the master_files directory exists
     os.makedirs(os.path.dirname(master_crop_path_global), exist_ok=True)

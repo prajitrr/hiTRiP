@@ -106,7 +106,7 @@ def TRiP():
     skip_master = False
     prev_master = False
     # Use os.path.join for Windows compatibility
-    master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_crop.txt")
+    master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_crop_global.txt")
     # Ensure the master_files directory exists
     os.makedirs(os.path.dirname(master_crop_path_global), exist_ok=True)
     
@@ -134,6 +134,7 @@ def TRiP():
         else:
             skip_master = True
     if not os.path.exists(master_crop_path_global) or skip_master:
+        # Use basename instead of split for Windows compatibility
         master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
         master_crop_new_path = os.path.join(images_path, master_crop_file_name)
         print(f"Previous master crop file not found/not in use. A new master crop file has been created in the experiment folder, {images_path}. Please add coordinates to this file.")
@@ -176,7 +177,7 @@ def TRiP():
         else:
             raise ValueError("Invalid input") 
     master_crop_save = ""
-
+    
     if not(not unsatisfied and prev_master):
         while (master_crop_save != "y" and master_crop_save != "n"):
             master_crop_save = input("Would you like to save the master crop.txt file globally? (Y/N) \n")
@@ -190,7 +191,7 @@ def TRiP():
     # Use basename instead of split for Windows compatibility
     master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
     master_crop_path = os.path.join(images_path, master_crop_file_name)
-    master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_crop.txt")
+    master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_crop_global.txt")
     
     # Ensure the master_files directory exists
     os.makedirs(os.path.dirname(master_crop_path_global), exist_ok=True)
