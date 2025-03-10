@@ -173,3 +173,6 @@ output
 
 #Temp TRiP Files
 .DS_Store
+
+# History 
+.history/
