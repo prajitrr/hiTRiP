@@ -1,3 +1,13 @@
+#-----------------------------------------------------#
+#                   PyTRiP
+#-----------------------------------------------------#
+#
+# This .py file contains the definitions to the functions to run TRiP
+#
+#
+#
+
+
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -24,7 +34,9 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img, out_
     print("\n-----------------------------------")
     print("CROPPING IMAGES...\n")
     img_extension = '*.' + img_extension
-    images = sorted([str(p) for p in Path(images_path).glob(img_extension)])
+    images = Path(images_path).glob(img_extension)
+    images = [str(p) for p in images]
+    images.sort()
     # Check if images were found
     assert len(images) > 0, f"No images found in {images_path}"
 
@@ -40,6 +52,11 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img, out_
     # check that all rows have 5 elements separated by a single space
     assert all(len(i.split(" ")) == 5 for i in crop_coords.iloc[:,0]), "All rows must have 5 elements separated by a single space"
 
+    # print the first 5 rows
+    # print(crop_coords.head())
+    # print the number of rows and columns
+    # print(crop_coords.shape)
+
     # Create empty lists for ID (key) and value (coordinates)
     keys = []
     values = []
@@ -47,9 +64,10 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img, out_
     # Gather IDs and coordinates
     for plant in range(len(crop_coords)):
         # Get ID (path to each 'cropped' folder)
-        plant_ID = crop_coords.iloc[plant,0] 
+        plant_ID = crop_coords.iloc[plant,0] #
         plant_ID = plant_ID.split(" ")[0] # Split by " "; take the first
         keys.append(plant_ID) # Add this to the 'keys' list
+        # print(f"Processing {plant_ID}...")
         # Get coordinates
         coords = crop_coords.iloc[plant,0]
         coords = coords.split(" ")[1:]  # This must change if using \t sep!!
@@ -78,18 +96,18 @@ def crop_all(images_path, cropfile_path, img_extension, start_img, end_img, out_
             imj_row2 = imj_row1 + coords[3] # horizontal top
             # Verify path exists, otherwise create folder
             cropped_path = os.path.join(out_dir, 'cropped', plant)  # path
+            #cropped_path = os.path.dirname(cropped_path) # convert to string
             if not os.path.exists(cropped_path):  # verify if exist
                 os.makedirs(cropped_path)
             # Define cropped image's full path
-            # Use os.path.basename to extract file name properly on all platforms
-            cropped_path = os.path.join(cropped_path, 'crop_' + os.path.basename(i))
+            cropped_path = cropped_path + '/crop_' + i.split('/')[-1]
             # Crop image
             cropped_image = image[imj_row1:imj_row2,imj_col1:imj_col2,:] # crop
             sub_image = Image.fromarray(cropped_image)  # Convert to PIL format
             sub_image.save(cropped_path) # Save image
 
     # Print where images were saved
-    print(f"\nAll folders were saved in: {os.path.join(out_dir, 'cropped')}")
+    print(f"\nAll folders were saved in: {out_dir}/cropped/")
 
 
 # Estimate derivatives
@@ -98,6 +116,8 @@ def space_time_deriv(subset_f):
     # dims = f[0].shape
     N = len(subset_f)
     dims = subset_f[0]['im'].shape
+    
+    # print(f"(N={N})")
     
     if N == 1:
         # Handle case when N = 1
@@ -127,6 +147,7 @@ def space_time_deriv(subset_f):
         deriv = np.array([-0.018855, -0.123711, -0.195900, 0.0, 0.195900, 0.123711, 0.018855])
     else:
         raise Warning(f'No such filter size (N={N})')
+        # print(f'No such filter size (N={N})')
         
     pre = [round(element,4) for element in pre]
     deriv = [round(element,4) for element in deriv]
@@ -145,29 +166,35 @@ def space_time_deriv(subset_f):
     # Perform the convolutions
     fx = convolve2d(fpt, pre_2d.T, mode='same')
     fx = convolve2d(fx, deriv_2d.T, mode='same')
+    # pd.DataFrame(fx)
     fy = convolve2d(fpt, pre_2d, mode='same')
     fy = convolve2d(fy, deriv_2d, mode='same')
+    # pd.DataFrame(fy)
     ft = convolve2d(fdt, pre_2d.T, mode='same')
     ft = convolve2d(ft, pre_2d, mode='same')
+    # pd.DataFrame(ft)
     
     return fx, fy, ft
 
 
 
 # Estimate motion
-def estimate_motion(dirname, img_extension='JPG'):
+def estimate_motion(dirname,img_extension='JPG'):
 
     GRADIENT_THRESHOLD = 8
+    # DISPLAY = 0
 
     # load frames
+    # dirname = '../cropped/crop_plant12'
     frames = []
-    ext = img_extension.lower()  # Normalize extension to lowercase
+    ext = img_extension
     
-    # Use os.listdir and filter instead of glob for better cross-platform compatibility
+    
     d = [filename for filename in os.listdir(dirname) 
-         if filename.lower().endswith(ext)]
+         if filename.endswith(ext)]
     d = sorted(d)
     N = len(d)
+    # print('loading {} frames...'.format(N))
     c = 1
     f = []
 
@@ -185,8 +212,11 @@ def estimate_motion(dirname, img_extension='JPG'):
 
         c += 1
     
-    ydim, xdim = f[0]['im'].shape
+    ydim, xdim = f[0]['im'].shape   # Double check if it isn't xdim, ydim instead.
     
+    # compute motion
+    # print('computing motion...')
+
     # Define the number of taps
     taps = 7
 
@@ -207,12 +237,19 @@ def estimate_motion(dirname, img_extension='JPG'):
     # Loop through the subsets of frames, 7 at a time, computing optical flow
     for k in range(N):
         subset_f = f[k:k+taps]
+        # print(f"Subset: {k} to {k+taps}")
         if len(subset_f) < 1:
             continue
         
         fx, fy, ft = space_time_deriv(subset_f)
 
         if any(var is not None for var in [fx,fx,ft]):
+
+            # Use output from Matlab (for testing)
+            # fx = pd.read_csv('../code/fx_matlab.csv', header=None).to_numpy()
+            # fy = pd.read_csv('../code/fy_matlab.csv', header=None).to_numpy()
+            # ft = pd.read_csv('../code/ft_matlab.csv', header=None).to_numpy()
+
             fx2 = convolve2d(convolve2d(fx*fx, blur.T, mode='same'),
                              blur, mode='same')
             fy2 = convolve2d(convolve2d(fy*fy, blur.T, mode='same'),
@@ -230,6 +267,8 @@ def estimate_motion(dirname, img_extension='JPG'):
             grad[:5, :] = 0
             grad[:, -5:] = 0
             grad[-5:, :] = 0
+
+
 
             # Compute optical flow
             cx = 0
@@ -250,8 +289,14 @@ def estimate_motion(dirname, img_extension='JPG'):
                     cy += 1
                 cx += 1
 
+            # check if bad / (xdim * ydim) == 1. If so, print warning and skip iteration
+            # if bad / (xdim * ydim) == 1:
+            #     # print(f"WARNING on frame {k}: no velocity estimate")
+            #     continue
+
             # check if bad / (xdim * ydim) == 1. If so, exit this function 
             if bad / (xdim * ydim) == 1:
+                # print(f"WARNING on frame {k}: no velocity estimate")
                 return None, None
     
     
@@ -288,29 +333,34 @@ def estimate_motion(dirname, img_extension='JPG'):
     return motion_x, motion_y
 
 
+
+
+
 # Estimate motion for all
 def estimateAll(indirname, outdirname, all_plants_name, img_extension='JPG'):
     print("\n-----------------------------------")
     print("ESTIMATING MOTION...\n")   
 
-    # Create output directories
-    motion_output_dir = os.path.join(outdirname, 'output', 'motion')
+    # Specify the input and output directories
+    #indirname = './cropped/'
+    #outdirname = './output/motion/'
+    # CReate them if don't exist
     Path(indirname).mkdir(parents=True, exist_ok=True)
-    Path(motion_output_dir).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(outdirname, f'output/motion')).mkdir(parents=True, exist_ok=True)
 
     # Get a list of cropped image subdirectories
     d = [f.path for f in os.scandir(indirname) if f.is_dir()]
     d = sorted(d)
 
     all_data = pd.DataFrame()
-    time_column = pd.DataFrame([], columns=["Time"])
+    time_column = pd.DataFrame([], columns=[f"Time"])
     all_data = pd.concat([all_data, time_column], axis=1)
 
     for k in d:
-        # Get plant ID using os.path.basename for cross-platform compatibility
-        plantID = os.path.basename(k).replace('.csv','')
+        # Get plant ID
+        plantID = k.split('/')[-1].replace('.csv','')
         # Estimate motion
-        motion_x, motion_y = estimate_motion(k, img_extension=img_extension)
+        motion_x,motion_y = estimate_motion(k, img_extension=img_extension)
         # Check if motion was estimated
         if motion_x is None or motion_y is None:
             print(f"ERROR: Could not estimate motion for {plantID}")
@@ -323,15 +373,26 @@ def estimateAll(indirname, outdirname, all_plants_name, img_extension='JPG'):
         df = pd.DataFrame(motion_y, columns=[f"{plantID}"])
         all_data = pd.concat([all_data, df], axis=1)
 
-        # Save CSV file using os.path.join
-        output_file = os.path.join(motion_output_dir, f'{plantID}.csv')
-        df.to_csv(output_file, index=False, header=True, na_rep='inf')
+        df.to_csv(os.path.join(outdirname, f'output/motion/{plantID}.csv'), 
+                  index=False, header=True, na_rep='inf')
+        # # Create motion figure
+        # plt.figure(1)
+        # plt.plot(motion_y, 'k',linewidth=1)
+        # plt.legend(['vertical motion'])
+        # plt.xlabel('Frame')
+        # plt.ylabel('Motion (pixels/frame)')
+        # plt.title(f'{plantID}')
+        # plt.box(True);
+        # # Save the figure
+        # plt.savefig(f'./output/motionX_{plantID}.png', bbox_inches='tight', facecolor='w');
+        # # Close the figure
+        # plt.close()
 
         print(f"Estimated motion for {k}")
     
-    # Save all data using os.path.join
-    all_plants_file = os.path.join(motion_output_dir, f'{all_plants_name}.csv')
-    all_data.to_csv(all_plants_file, index=False, header=True, na_rep='inf')
+    all_data.to_csv(os.path.join(outdirname, f'output/motion/{all_plants_name}.csv'), 
+                    index=False, header=True, na_rep='inf')
+
 
 
 # Evaluate model
@@ -375,16 +436,11 @@ def ModelFitALL(in_dir, out_dir):
     print("\n-----------------------------------")
     print("FITTING MODEL TO MOTION DATA...\n")
 
-    # Use Path for cross-platform glob pattern
-    motion_dir = os.path.join(in_dir, "output", "motion")
-    model_output_dir = os.path.join(out_dir, 'output', 'model')
-    
-    # Use pathlib for safer cross-platform globbing
-    d = list(Path(motion_dir).glob("*.csv"))
-    d = sorted([str(path) for path in d])
+    d = glob.glob(os.path.join(in_dir,"output/motion/*.csv"))
+    d = sorted(d)
 
-    # Create output directory if it doesn't exist
-    Path(model_output_dir).mkdir(parents=True, exist_ok=True)
+    # Create output directory if it don't exist
+    Path(os.path.join(out_dir, 'output/model')).mkdir(parents=True, exist_ok=True)
 
     Path_Array = []
     Period_Array = []
@@ -393,15 +449,15 @@ def ModelFitALL(in_dir, out_dir):
     rae_Array = []
 
     for k in d:
-        # Get plant ID using os.path.basename for cross-platform compatibility
+        # Get plant ID
         fn = k
-        plantID = os.path.basename(k).replace('.csv','')
+        plantID = k.split('/')[-1].replace('.csv','')
         
         if "all_plants" in plantID:
             continue
         
         dat = pd.read_csv(fn, header=0)
-        # Check if all values are the same
+        # Check if all values are the same, if so, skip this iteration, after printing an error message
         if len(dat.iloc[:,0].unique()) == 1:
             print(f"All values are the same for {plantID}. No model will be fitted for this plant.")
             continue
@@ -411,10 +467,20 @@ def ModelFitALL(in_dir, out_dir):
         dat = dat - dat.mean()
         dat = (dat - detrend(dat, type='linear'))
         dat = np.array(dat.squeeze())
+        # dat.to_csv('dat_python.csv') 
         N = len(dat)
 
         # compute dominant frequency and phase for starting condition
         D = np.fft.fftshift(np.fft.fft(dat))
+        # newD = pd.read_csv('D.csv')
+        # Dml = np.fft.fftshift(np.fft.fft(np.array(newD.ML)))
+        # Dpy = np.fft.fftshift(np.fft.fft(np.array(newD.Py)))
+
+        # plt.figure()
+        # plt.plot(Dml, np.abs(np.fft.fft(Dml)), 'b')
+        # plt.plot(Dpy, np.abs(np.fft.fft(Dpy)), 'k')
+        # plt.plot(D, np.abs(np.fft.fft(D)), 'r', linewidth=1)
+        # plt.grid()
 
         if len(dat) % 2 == 0:
             mid = len(dat) // 2
@@ -433,8 +499,8 @@ def ModelFitALL(in_dir, out_dir):
         model = minimize(errorFunc, initial_model, args=(dat,), method='Nelder-Mead').x
 
         # Plot results
+        # fnout = fn.replace('.csv', '_model.png')
         f = evaluateModel(model, N)
-        plt.figure()
         plt.plot(dat, 'b', linewidth=1)
         plt.plot(f, 'r', linewidth=1)
 
@@ -445,11 +511,12 @@ def ModelFitALL(in_dir, out_dir):
 
         plt.legend(['Data', 'Model'])
         plt.title('Frequency = {}'.format(round(model[0],2)))
-        
-        # Save the figure using os.path.join for the path
-        output_plot = os.path.join(model_output_dir, f'model_{plantID}.png')
-        plt.savefig(output_plot, bbox_inches='tight', facecolor='w')
+        # Save the figure
+        plt.savefig(os.path.join(out_dir, f'output/model/model_{plantID}.png'), 
+                    bbox_inches='tight', facecolor='w');
+        # Close the figure
         plt.close()
+
 
         freq = model[0]
         Period = N / freq
@@ -477,6 +544,7 @@ def ModelFitALL(in_dir, out_dir):
         residuals = dat - fittedData
         rsq = 1 - np.sum(residuals ** 2) / np.sum((dat - np.mean(dat)) ** 2)
 
+
         # Calculate the confidence interval for frequency (CI_freq)
         ci_freq = np.sqrt(cov[0, 0])
         CI_freq = ci_freq * Period / beta[0]
@@ -497,6 +565,7 @@ def ModelFitALL(in_dir, out_dir):
 
         print(f"Fitted model for {plantID}")
 
+
     Models_data = pd.DataFrame(
         {'ID': Path_Array,
          'Period': Period_Array,
@@ -505,6 +574,4 @@ def ModelFitALL(in_dir, out_dir):
          'RAE': rae_Array,   
         })
 
-    # Save to CSV using os.path.join
-    output_file = os.path.join(model_output_dir, 'MODELS_DATA.csv')
-    Models_data.to_csv(output_file, index=False)
+    Models_data.to_csv(os.path.join(out_dir,'output/model/MODELS_DATA.csv'),index=False)

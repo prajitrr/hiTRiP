@@ -27,6 +27,7 @@ parser.add_argument('-mt','--motion', type=str, required=False, help='Estimate m
 parser.add_argument('-m','--model', type=str, required=False, help='Fit model to motion data', default=None)
 parser.add_argument('-s','--start_img', type=int, required=False, help='Start image number', default=None)
 parser.add_argument('-f','--end_img', type=int, required=False, help='End image number', default=None)
+parser.add_argument('-a','--automatic', type=str, required=False, help='Run automatically', default=None)
 args = parser.parse_args()
 
 
@@ -70,6 +71,17 @@ elif str(args.combine) == "False":
 else:
     print("Parameter combine must be either True or False")
     sys.exit()
+
+if args.automatic is not None:
+    if str(args.automatic) == "True":
+        automatic = True
+    elif str(args.automatic) == "False":
+        automatic = False
+    else:  
+        print("Parameter automatic must be either True or False")
+        sys.exit()
+else:
+    automatic = False
 
 # Run the functions
 def TRiP():
@@ -127,7 +139,7 @@ def TRiP():
             # Use basename instead of split for Windows compatibility
             master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
             master_crop_new_path = os.path.join(images_path, master_crop_file_name)
-            print(f"A file named {images_path}_crop.txt has been created in the experiment folder. PLEASE SAVE THE CROPPING COORDINATES IN THIS FILE. Once you have saved the coordinates, press" + "\033[1m" + "Enter" + "\033[0m" to continue.")
+            print(f"Previous master crop file not found/not in use. A new master crop file has been created in the experiment folder, {images_path}. Please add coordinates to this file.")
             with open(master_crop_new_path, "w+") as f:
                 f.write("")
             input("Press Enter to continue once you have added coordinates to the master crop file")
@@ -151,7 +163,9 @@ def TRiP():
                 dir_name = os.path.join(images_path, dir)
                 video = os.path.join(dir_name, f"_{dir}_video.mp4")
                 generate_video(dir_name, video)
-            usr_input = input("A video file (.mp4) containing the cropping regions has been generated for each Experiment subfolder containing an image time series.\nGo to each subfolder and play the video to review the cropping region placement.\n*) If the cropping regions for all time series are CORRECT, type \"next\" and  press Enter to continue.\n*) If the cropping regions for any time series is INCORRECT, edit the coordinates in the crop.txt file located in the subfolder containing the images for the incorrectly cropped time series.\nThen, type \"crop\" and press Enter to generate new videos with the updated coordinates.")
+            usr_input = input("Video was generated. Please view the video. \n" + 
+                            "If you are satisfied, type \"next\". Then, press Enter to continue. \n" + 
+                            "If you are not satisfied, first edit the crop.txt files, then type \"crop\". Then, press Enter to continue. \n")
             usr_input = usr_input.lower().strip()
             while (usr_input != "next" and usr_input != "crop"):
                 usr_input = input("Invalid input. Please choose either \"next\" or \"crop\" as your input. Then, press Enter to continue. \n")

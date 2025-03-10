@@ -151,7 +151,7 @@ def TRiP():
                 dir_name = os.path.join(images_path, dir)
                 video = os.path.join(dir_name, f"_{dir}_video.mp4")
                 generate_video(dir_name, video)
-            usr_input = input("A video file (.mp4) containing the cropping regions has been generated for each Experiment subfolder containing an image time series.\nGo to each subfolder and play the video to review the cropping region placement.\n*) If the cropping regions for all time series are CORRECT, type \"next\" and  press Enter to continue.\n*) If the cropping regions for any time series is INCORRECT, edit the coordinates in the crop.txt file located in the subfolder containing the images for the incorrectly cropped time series.\nThen, type \"crop\" and press Enter to generate new videos with the updated coordinates.")
+" +)
             usr_input = usr_input.lower().strip()
             while (usr_input != "next" and usr_input != "crop"):
                 usr_input = input("Invalid input. Please choose either \"next\" or \"crop\" as your input. Then, press Enter to continue. \n")

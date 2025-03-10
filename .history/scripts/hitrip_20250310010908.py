@@ -8,6 +8,9 @@ import os
 import zipfile
 import re
 
+
+FILE_SEPARATOR = ".........."
+
 def natural_sort(l): 
     str_to_int = lambda item: int(item) if item.isdigit() else item.lower()
     output = lambda input: [str_to_int(char) for char in re.split('([0-9]+)', input)]
@@ -71,6 +74,14 @@ else:
     print("Parameter combine must be either True or False")
     sys.exit()
 
+if str(args.automatic) == "True":
+    automatic = True
+elif str(args.automatic) == "False":
+    automatic = False
+else:  
+    print("Parameter automatic must be either True or False")
+    sys.exit()
+
 # Run the functions
 def TRiP():
     start_all = time.time()
@@ -80,11 +91,8 @@ def TRiP():
     
     start_time = time.time() # start timer
 
-    dirs = []
-    for item in os.listdir(images_path):
-        if os.path.isdir(os.path.join(images_path, item)):
-            dirs.append(item)
-    
+    root, dirs, files = next(os.walk(images_path))
+    dirs.sort()
     previous_plants = 0
     num_dirs = len(dirs)
     
@@ -95,11 +103,7 @@ def TRiP():
 
         skip_master = False
         prev_master = False
-        # Use os.path.join for Windows compatibility
-        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_files", "master_crop_global.txt")
-        # Ensure the master_files directory exists
-        os.makedirs(os.path.dirname(master_crop_path_global), exist_ok=True)
-        
+        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
         if os.path.exists(master_crop_path_global):
             user_input_skip_master = ""
             while (user_input_skip_master != "y" and user_input_skip_master != "n"):
@@ -111,12 +115,10 @@ def TRiP():
                 
 
                 with open(master_crop_path_global, "r") as f:
-                    master_content = f.readlines()
                     for directory in sorted_dirs:
                         crop_path = os.path.join(images_path, directory, "crop.txt")
-                        os.makedirs(os.path.dirname(crop_path), exist_ok=True)
                         with open(crop_path, "w+") as f2:
-                            for crop_coords in master_content:
+                            for crop_coords in f:
                                 if crop_coords == "\n":
                                     break
                                 f2.write(crop_coords)
@@ -124,10 +126,9 @@ def TRiP():
             else:
                 skip_master = True
         if not os.path.exists(master_crop_path_global) or skip_master:
-            # Use basename instead of split for Windows compatibility
-            master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
+            master_crop_file_name = images_path.split("/")[-1] + "_crop.txt"
             master_crop_new_path = os.path.join(images_path, master_crop_file_name)
-            print(f"A file named {images_path}_crop.txt has been created in the experiment folder. PLEASE SAVE THE CROPPING COORDINATES IN THIS FILE. Once you have saved the coordinates, press" + "\033[1m" + "Enter" + "\033[0m" to continue.")
+            print(f"Previous master crop file not found/not in use. A new master crop file has been created in the experiment folder, {images_path}. Please add coordinates to this file.")
             with open(master_crop_new_path, "w+") as f:
                 f.write("")
             input("Press Enter to continue once you have added coordinates to the master crop file")
@@ -136,7 +137,6 @@ def TRiP():
             with open(master_crop_new_path, "r") as f:
                     for directory in sorted_dirs:
                         crop_path = os.path.join(images_path, directory, "crop.txt")
-                        os.makedirs(os.path.dirname(crop_path), exist_ok=True)
                         with open(crop_path, "w+") as f2:
                             for crop_coords in f:
                                 if crop_coords == "\n":
@@ -151,7 +151,9 @@ def TRiP():
                 dir_name = os.path.join(images_path, dir)
                 video = os.path.join(dir_name, f"_{dir}_video.mp4")
                 generate_video(dir_name, video)
-            usr_input = input("A video file (.mp4) containing the cropping regions has been generated for each Experiment subfolder containing an image time series.\nGo to each subfolder and play the video to review the cropping region placement.\n*) If the cropping regions for all time series are CORRECT, type \"next\" and  press Enter to continue.\n*) If the cropping regions for any time series is INCORRECT, edit the coordinates in the crop.txt file located in the subfolder containing the images for the incorrectly cropped time series.\nThen, type \"crop\" and press Enter to generate new videos with the updated coordinates.")
+            usr_input = input("Video was generated. Please view the video. \n" + 
+                            "If you are satisfied, type \"next\". Then, press Enter to continue. \n" + 
+                            "If you are not satisfied, first edit the crop.txt files, then type \"crop\". Then, press Enter to continue. \n")
             usr_input = usr_input.lower().strip()
             while (usr_input != "next" and usr_input != "crop"):
                 usr_input = input("Invalid input. Please choose either \"next\" or \"crop\" as your input. Then, press Enter to continue. \n")
@@ -174,17 +176,12 @@ def TRiP():
         
         print(f"---------------------------------------------------------------------")
         print(f"GENERATING MASTER crop.txt FILE...")
-        # Use basename instead of split for Windows compatibility
-        master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
+        master_crop_file_name = images_path.split("/")[-1] + "_crop.txt"
         master_crop_path = os.path.join(images_path, master_crop_file_name)
-        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)), "master_files", "master_crop_global.txt")
-        
-        # Ensure the master_files directory exists
-        os.makedirs(os.path.dirname(master_crop_path_global), exist_ok=True)
-        
+        master_crop_path_global = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/master_files/master_crop_global.txt")
         with open(master_crop_path, "w+") as f:
             for num, dir in enumerate(sorted_dirs):
-                dir_name = dir
+                dir_name = os.path.join(dir)
                 dir_name_full = os.path.join(images_path, dir)
                 crop_coords = os.path.join(dir_name_full, "crop.txt")
                 with open(crop_coords, "r") as crop_file:
@@ -192,19 +189,13 @@ def TRiP():
                         f.write(line)
                 f.write("\n")
             
-            # Remove last line break - Windows compatible way
-            f.seek(0, os.SEEK_END)
-            pos = f.tell() - 1
-            if pos >= 0:
-                f.seek(pos, os.SEEK_SET)
-                if f.read(1) == '\n':
-                    f.seek(pos, os.SEEK_SET)
-                    f.truncate()
+            f.seek(f.tell() - 1, os.SEEK_SET)
+            f.truncate()
             
         if master_crop_save == "y":    
             with open(master_crop_path_global, "w+") as f:
                 for num, dir in enumerate(sorted_dirs):
-                    dir_name = dir
+                    dir_name = os.path.join(dir)
                     dir_name_full = os.path.join(images_path, dir)
                     crop_coords = os.path.join(dir_name_full, "crop.txt")
                     with open(crop_coords, "r") as crop_file:
@@ -212,14 +203,9 @@ def TRiP():
                             f.write(line)
                     f.write("\n")
 
-                # Remove last line break - Windows compatible way
-                f.seek(0, os.SEEK_END)
-                pos = f.tell() - 1
-                if pos >= 0:
-                    f.seek(pos, os.SEEK_SET)
-                    if f.read(1) == '\n':
-                        f.seek(pos, os.SEEK_SET)
-                        f.truncate()
+                #Remove last line break
+                f.seek(f.tell() - 1, os.SEEK_SET)
+                f.truncate()            
                         
         
     else:
@@ -229,7 +215,6 @@ def TRiP():
             print(f"Generating crop.txt file for folder {num+1}/{num_dirs}: {dir}")
             dir_name = os.path.join(images_path, dir)
             crop_coords = os.path.join(dir_name, "crop.txt")
-            os.makedirs(os.path.dirname(crop_coords), exist_ok=True)
             with open(crop_coords, "w+") as f:
                 f.write("")
         input("Press Enter to continue once you have added coordinates to all the crop.txt files")
@@ -265,16 +250,31 @@ def TRiP():
         crop_coords = os.path.join(dir_name, "crop.txt")
         pt.crop_all(dir_name, crop_coords, img_extension, start_img=start_img, end_img=end_img, out_dir=images_path)
     
+
+
+    # img_path = os.path.dirname(os.path.realpath(images_path))
+
+    # coordinates = autocrop(images_path, 12, 0, 45, "../test/out_video.mp4")
+    # crop_coords = os.path.join(img_path, "crop.txt")
+
+    # with open(crop_coords, "w+") as f:
+    #     for object_num, rect in enumerate(coordinates):
+    #         number = object_num + 1
+    #         f.write(f'plant_A{number:02} ')
+    #         f.write(' '.join(map(str, rect)) + '\n')
+
+    # pt.crop_all(os.path.join(img_path, "Images"), crop_coords, img_extension, start_img=start_img, end_img=end_img)
+    # end_time = time.time()  # End timer
+    # total_time = round(end_time - start_time,2)
+    # print("\nTime to crop: ", total_time, " seconds")
+    # print("-----------------------------------\n")
+
     if motion == True:
         start_time = time.time() # start timer
-        # Use basename instead of split for Windows compatibility
-        combined_csv_name = os.path.basename(images_path) + "_all_plants"
-        cropped_dir = os.path.join(images_path, "cropped")
-        # Ensure cropped directory exists
-        os.makedirs(cropped_dir, exist_ok=True)
-        pt.estimateAll(indirname=cropped_dir, outdirname=images_path, all_plants_name=combined_csv_name, img_extension=img_extension) # Estimate motion
+        combined_csv_name = images_path.split("/")[-1] + "_all_plants"
+        pt.estimateAll(indirname=os.path.join(images_path, "cropped/"), outdirname=images_path, all_plants_name=combined_csv_name,img_extension=img_extension) # Estimate motion
         end_time = time.time()  # End timer
-        total_time = round(end_time - start_time, 2)
+        total_time = round(end_time - start_time,2)
         print("\nTime to estimate motion: ", total_time, " seconds")
         print("-----------------------------------\n")
     
@@ -282,15 +282,18 @@ def TRiP():
         start_time = time.time()
         pt.ModelFitALL(in_dir=images_path, out_dir=images_path) # Fit model to motion data
         end_time = time.time()  # End timer
-        total_time = round(end_time - start_time, 2)
+        total_time = round(end_time - start_time,2)
         print("\nTime to fit model: ", total_time, " seconds")
         print("-----------------------------------")
     
     end_all = time.time()
-    total_time_all = round(end_all - start_all, 2)
+    total_time_all = round(end_all - start_all,2)
     print("\nhiTRiP execution completed!\n")
     print("Total time: ", total_time_all, " seconds\n\n")
 
 
 if __name__ == "__main__":
     TRiP()
+
+# Example usage:
+# python3 acceltrip.py -d ../../input/ -c ../crop.txt -mt True -m True
