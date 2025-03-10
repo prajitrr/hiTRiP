@@ -140,17 +140,16 @@ def TRiP():
                                             
         else:
             skip_master = True
-    
-    master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
-    master_crop_new_path = os.path.join(images_path, master_crop_file_name)
-    
+            
     if not os.path.exists(master_crop_path_global) or skip_master:
-        
+        master_crop_file_name = os.path.basename(images_path) + "_crop.txt"
+        master_crop_new_path = os.path.join(images_path, master_crop_file_name)
         print(f"Previous master crop file not found/not in use. A new master crop file has been created in the experiment folder, {images_path}. Please add coordinates to this file.")
         with open(master_crop_new_path, "w+") as f:
             f.write("")
         input("Press Enter to continue once you have added coordinates to the master crop file")
-        
+    else:
+        master_crop_new_path = master_crop_path_global     
     unsatisfied = False
     while True:
         with open(master_crop_new_path, "r") as f:
