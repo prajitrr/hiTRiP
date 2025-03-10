@@ -87,11 +87,10 @@ else:
 def TRiP():
     # Get path of this file
     path = os.path.dirname(os.path.abspath(__file__))
-
-    # Check if a file .placeholder.txt exists in the data
+    
+    # Check if a file sigma.txt exists in the directory above this file/data
     if os.path.exists(os.path.join(path, "..", "data", ".placeholder.txt")):
         os.remove(os.path.join(path, "..", "data", ".placeholder.txt"))
-        
     start_all = time.time()
     # Check if images_path exists
     assert os.path.exists(images_path), "I did not find the folder at, " + str(images_path)
